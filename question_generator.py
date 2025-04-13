@@ -180,12 +180,15 @@ class QuestionGenerator:
                     'question': line[2:].strip(),
                     'options': [],
                     'answer': '',
+                    'explanation': '',
                     'type': 'mcq'
                 }
             elif re.match(r'^[A-D]\)', line, re.IGNORECASE):
                 current_q['options'].append(line[2:].strip())
             elif line.lower().startswith('answer:'):
                 current_q['answer'] = line.split(':')[1].strip().upper()
+            elif line.lower().startswith('explanation:'):
+                current_q['explanation'] = line.split(':')[1].strip()
         
         if current_q:
             questions.append(current_q)
@@ -194,7 +197,26 @@ class QuestionGenerator:
 
     @staticmethod
     def _parse_written_response(text: str) -> List[Dict]:
-        return [{
-            'question': line[2:].strip(),
-            'type': 'written'
-        } for line in text.split('\n') if line.lower().startswith('q:')]
+        questions = []
+        current_q = {}
+        
+        for line in text.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+                
+            if line.lower().startswith('q:'):
+                if current_q:
+                    questions.append(current_q)
+                current_q = {
+                    'question': line[2:].strip(),
+                    'solution': '',
+                    'type': 'written'
+                }
+            elif line.lower().startswith('solution:'):
+                current_q['solution'] = line.split(':')[1].strip()
+        
+        if current_q:
+            questions.append(current_q)
+            
+        return questions

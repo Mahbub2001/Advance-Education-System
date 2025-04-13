@@ -10,3 +10,4 @@ transformers<=4.50.0
 pdfplumber
 PyMuPDF
 diskcache
+textstat

@@ -60,6 +60,9 @@ def main():
                 for opt in q['options']:
                     print(f"   - {opt}")
                 print(f"   Answer: {q['answer']}")
+                print(f"   Explanation: {q.get('explanation', 'No explanation provided')}")
+            else:
+                print(f"   Sample Solution: {q.get('solution', 'No solution provided')}")
                 
     except Exception as e:
         logger.error(f"Error: {str(e)}")
