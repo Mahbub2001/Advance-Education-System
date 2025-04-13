@@ -9,3 +9,4 @@ sentence_transformers>=3.0.0
 transformers<=4.50.0
 pdfplumber
 PyMuPDF
+diskcache
