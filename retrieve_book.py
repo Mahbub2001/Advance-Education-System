@@ -49,9 +49,9 @@ class ChapterRetriever:
                        'Eleven', 'Twelve']
         return [ch for ch in number_words if ch in chapters]
     
-retriever = ChapterRetriever()
+# retriever = ChapterRetriever()
 
-print("Available chapters:", retriever.list_available_chapters("chemistry9_10"))
+# print("Available chapters:", retriever.list_available_chapters("chemistry9_10"))
 
-chapter_content = retriever.get_full_chapter("chemistry9_10", "Eight")
-print(chapter_content)  
+# chapter_content = retriever.get_full_chapter("chemistry9_10", "Eight")
+# print(chapter_content)  

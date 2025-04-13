@@ -8,34 +8,37 @@ class Config:
     PINECONE_INDEX_NAME = "learnbuddy"
     EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
     
-    # LLM Configuration (using OpenAI as example)
-    # OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-    # LLM_MODEL = "gpt-3.5-turbo"
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+    LLM_MODEL = "deepseek/deepseek-r1-distill-llama-70b:free"
+    SITE_URL = os.getenv("SITE_URL", "http://localhost")
+    SITE_NAME = os.getenv("SITE_NAME", "LearnBuddy")
     
     DATA_FOLDER = "./data"
     OUTPUT_FOLDER = "./output"
     
     DEFAULT_NUM_QUESTIONS = 5
-    MCQ_TEMPLATE = """
-    Generate {num_questions} multiple-choice questions based on the context.
-    Each question should have 4 options with one correct answer.
-    Format each question as follows:
+    MCQ_TEMPLATE = """Generate exactly {num_questions} multiple-choice questions from this textbook chapter.
+    Each question must have:
+    1. A clear question stem
+    2. 4 plausible options (A-D)
+    3. One correct answer
+
+    Format each exactly like:
     Q: [question text]
-    A) [option 1]
-    B) [option 2]
-    C) [option 3]
-    D) [option 4]
-    Answer: [correct option letter]
-    
-    Context:
-    {context}
-    """
-    
-    WRITTEN_TEMPLATE = """
-    Generate {num_questions} written answer questions based on the context.
-    Format each question as follows:
+    A) [option A]
+    B) [option B]
+    C) [option C]
+    D) [option D]
+    Answer: [letter]
+
+    Chapter Content:
+    {context}"""
+        
+    WRITTEN_TEMPLATE = """Generate exactly {num_questions} short-answer questions from this textbook chapter.
+    Each question should require a paragraph-length response.
+
+    Format each exactly like:
     Q: [question text]
-    
-    Context:
-    {context}
-    """
+
+    Chapter Content:
+    {context}"""

@@ -1,0 +1,57 @@
+[
+  {
+    "question": "What is the source of chemical energy in substances?",
+    "options": [
+      "Heat",
+      "Light",
+      "Electricity",
+      "Chemical bonds"
+    ],
+    "answer": "D",
+    "type": "mcq"
+  },
+  {
+    "question": "What distinguishes exothermic reactions from endothermic reactions?",
+    "options": [
+      "The speed of the reaction",
+      "The release or absorption of heat",
+      "The formation of gases",
+      "The color change"
+    ],
+    "answer": "B",
+    "type": "mcq"
+  },
+  {
+    "question": "In a Daniell cell, which metal serves as the anode and which as the cathode?",
+    "options": [
+      "Copper as anode, zinc as cathode",
+      "Zinc as anode, copper as cathode",
+      "Both are anodes",
+      "Both are cathodes"
+    ],
+    "answer": "B",
+    "type": "mcq"
+  },
+  {
+    "question": "What are the products of the electrolysis of a concentrated NaCl solution?",
+    "options": [
+      "Hydrogen gas and chlorine gas",
+      "Sodium hydroxide and chlorine gas",
+      "Hydrogen gas, chlorine gas, and sodium hydroxide",
+      "Oxygen gas and sodium hydroxide"
+    ],
+    "answer": "C",
+    "type": "mcq"
+  },
+  {
+    "question": "What is the primary source of energy in nuclear power plants?",
+    "options": [
+      "Fossil fuels",
+      "Chemical reactions",
+      "Nuclear fission",
+      "Solar energy"
+    ],
+    "answer": "C",
+    "type": "mcq"
+  }
+]
