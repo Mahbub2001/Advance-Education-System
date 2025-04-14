@@ -72,6 +72,7 @@ Solution: [sample solution using textbook content and general knowledge]
 Content Excerpt:
 {context}"""
 
+    # Templates
     CONTENT_REVIEW_TEMPLATE = """Analyze this {paper_type} for content quality. Evaluate:
 1. Thesis clarity and focus
 2. Argument strength and evidence
@@ -97,6 +98,7 @@ Score: [0-100]
 Paper Content:
 {content}"""
 
+    # Add this to the Config class in config.py
     SOLUTION_COMPARISON_TEMPLATE = """Compare the sample solution with the student's solution for this question:
     
 Question: {question}
@@ -172,18 +174,30 @@ Expected Solution: {sample_solution}
 
 Student's Answer: {user_solution}
 
-Provide detailed feedback in this format:
-Accuracy: [0-100] (how correct is the answer)
-Completeness: [0-100] (how thoroughly it addresses the question)
-Clarity: [0-100] (how clear and well-structured the response is)
+Provide detailed feedback in this EXACT format:
 
-Feedback:
+ACCURACY: [0-100] (how correct is the answer)
+COMPLETENESS: [0-100] (how thoroughly it addresses the question)
+CLARITY: [0-100] (how clear and well-structured the response is)
+
+FEEDBACK:
 - [Specific feedback on content accuracy]
 - [Specific feedback on missing elements]
 - [Specific feedback on structure/clarity]
 
-Suggested Improvements:
+STRENGTHS:
+- [Strength 1]
+- [Strength 2]
+- [Strength 3]
+
+WEAKNESSES:
+- [Weakness 1]
+- [Weakness 2]
+- [Weakness 3]
+
+SUGGESTED IMPROVEMENTS:
 - [Suggestion 1]
 - [Suggestion 2]
+- [Suggestion 3]
 
-Final Score: [weighted average score 0-100]"""
+FINAL SCORE: [weighted average score 0-100]"""

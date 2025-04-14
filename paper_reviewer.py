@@ -100,7 +100,7 @@ class ExamPaperReviewer:
                 },
                 model=Config.LLM_MODEL,
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.2, 
+                temperature=0.2,  
                 max_tokens=2000
             )
             return completion.choices[0].message.content
@@ -117,9 +117,8 @@ class ExamPaperReviewer:
             "strengths": [],
             "weaknesses": [],
             "suggestions": [],
-            "detailed_feedback": ""
+            "detailed_feedback": text
         }
-        
         score_match = re.search(r"Final Score:\s*(\d+)", text)
         if score_match:
             try:
@@ -129,28 +128,32 @@ class ExamPaperReviewer:
             except:
                 pass
         
-        strengths_section = re.search(r"Key Strengths:\s*(.*?)(?=\n\s*\n|\Z)", text, re.DOTALL)
+        strengths_section = re.search(r"Strengths:\s*(.*?)(?=\n\s*\n|\Z)", text, re.DOTALL | re.IGNORECASE)
         if strengths_section:
             result["strengths"] = [
                 s.strip() for s in strengths_section.group(1).split("\n") 
-                if s.strip() and not s.strip().startswith('-')
+                if s.strip() and (s.strip().startswith('-') or s.strip().startswith('*'))
             ]
+            result["strengths"] = [s.lstrip('-* ').strip() for s in result["strengths"]]
         
-        weaknesses_section = re.search(r"Areas for Improvement:\s*(.*?)(?=\n\s*\n|\Z)", text, re.DOTALL)
+        weaknesses_section = re.search(r"Weaknesses:\s*(.*?)(?=\n\s*\n|\Z)", text, re.DOTALL | re.IGNORECASE)
         if weaknesses_section:
             result["weaknesses"] = [
                 s.strip() for s in weaknesses_section.group(1).split("\n") 
-                if s.strip() and not s.strip().startswith('-')
+                if s.strip() and (s.strip().startswith('-') or s.strip().startswith('*'))
             ]
+            result["weaknesses"] = [s.lstrip('-* ').strip() for s in result["weaknesses"]]
         
-        suggestions_section = re.search(r"Suggested Improvements:\s*(.*?)(?=\n\s*\n|\Z)", text, re.DOTALL)
+        suggestions_section = re.search(r"Suggested Improvements:\s*(.*?)(?=\n\s*\n|\Z)", text, re.DOTALL | re.IGNORECASE)
+        if not suggestions_section:
+            suggestions_section = re.search(r"Suggested Improvements:\s*(.*?)(?=Weaknesses:|\Z)", text, re.DOTALL | re.IGNORECASE)
+        
         if suggestions_section:
             result["suggestions"] = [
                 s.strip() for s in suggestions_section.group(1).split("\n") 
-                if s.strip() and not s.strip().startswith('-')
+                if s.strip() and (s.strip().startswith('-') or s.strip().startswith('*') or s.strip()[0].isdigit())
             ]
-        
-        result["detailed_feedback"] = text
+            result["suggestions"] = [re.sub(r'^[\d\-*\.\s]+', '', s).strip() for s in result["suggestions"]]
         
         return result
 
