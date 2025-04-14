@@ -72,7 +72,6 @@ Solution: [sample solution using textbook content and general knowledge]
 Content Excerpt:
 {context}"""
 
-    # Templates
     CONTENT_REVIEW_TEMPLATE = """Analyze this {paper_type} for content quality. Evaluate:
 1. Thesis clarity and focus
 2. Argument strength and evidence
@@ -97,6 +96,37 @@ Score: [0-100]
 
 Paper Content:
 {content}"""
+
+    SOLUTION_COMPARISON_TEMPLATE = """Compare the sample solution with the student's solution for this question:
+    
+Question: {question}
+
+Sample Solution:
+{sample_solution}
+
+Student's Solution:
+{student_solution}
+
+Evaluate based on:
+1. Accuracy of key concepts
+2. Completeness of answer
+3. Logical flow
+4. Evidence/support provided
+5. Originality of thought
+
+Provide feedback in this format:
+Key Strengths:
+- [Strength 1]
+- [Strength 2]
+
+Areas for Improvement:
+- [Improvement 1]
+- [Improvement 2]
+
+Score: [0-100] (based on similarity to ideal answer)
+
+Detailed Analysis:
+[Detailed paragraph comparing the solutions]"""
 
     STRUCTURE_REVIEW_TEMPLATE = """Evaluate this paper's structure:
 1. Logical flow between paragraphs
@@ -133,3 +163,27 @@ He go to school → He goes to school
 
 Content:
 {content}"""
+
+    EXAM_QUESTION_REVIEW_TEMPLATE = """Evaluate a student's answer against the expected solution for this question:
+
+Question: {question}
+
+Expected Solution: {sample_solution}
+
+Student's Answer: {user_solution}
+
+Provide detailed feedback in this format:
+Accuracy: [0-100] (how correct is the answer)
+Completeness: [0-100] (how thoroughly it addresses the question)
+Clarity: [0-100] (how clear and well-structured the response is)
+
+Feedback:
+- [Specific feedback on content accuracy]
+- [Specific feedback on missing elements]
+- [Specific feedback on structure/clarity]
+
+Suggested Improvements:
+- [Suggestion 1]
+- [Suggestion 2]
+
+Final Score: [weighted average score 0-100]"""

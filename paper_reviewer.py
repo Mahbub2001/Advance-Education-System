@@ -1,5 +1,5 @@
 from openai import OpenAI
-from typing import Dict, List
+from typing import Dict, List, Optional
 from config import Config
 import re
 import logging
@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from diskcache import Cache
 import textstat
 
-class PaperReviewer:
+class ExamPaperReviewer:
     def __init__(self):
         self.client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
@@ -16,116 +16,79 @@ class PaperReviewer:
         self.logger = logging.getLogger(__name__)
         self.cache = Cache(Config.REVIEW_CACHE_DIR)
         
-    def review_paper(self, paper_text: str, paper_type: str = "essay") -> Dict:
+    def review_exam_paper(self, questions: List[Dict[str, str]]) -> Dict:
         """
-        Comprehensive paper review with multiple analysis dimensions
+        Review an exam paper containing questions and answers
+        Each question should be a dict with:
+        - 'question': The question text
+        - 'model_answer': The ideal answer
+        - 'student_answer': The student's response
+        - 'marks': (optional) The maximum marks for this question
         """
-        if not paper_text.strip():
-            raise ValueError("Empty paper content provided")
+        if not questions:
+            raise ValueError("No questions provided for review")
             
-        cache_key = f"{hash(paper_text)}_{paper_type}"
+        cache_key = f"exam_review_{hash(str(questions))}"
         if cache_key in self.cache:
             return self.cache[cache_key]
             
         try:
-            # Parallel execution of different review aspects
-            with ThreadPoolExecutor(max_workers=4) as executor:
-                future_content = executor.submit(
-                    self._review_content, 
-                    paper_text, 
-                    paper_type
-                )
-                future_structure = executor.submit(
-                    self._review_structure, 
-                    paper_text
-                )
-                future_grammar = executor.submit(
-                    self._review_grammar, 
-                    paper_text
-                )
-                future_metrics = executor.submit(
-                    self._calculate_metrics, 
-                    paper_text
-                )
-                
-                results = {
-                    "content_analysis": future_content.result(),
-                    "structure_analysis": future_structure.result(),
-                    "grammar_analysis": future_grammar.result(),
-                    "readability_metrics": future_metrics.result(),
-                    "overall_score": None
+            results = {
+                "questions": [],
+                "overall_score": 0,
+                "feedback_summary": {
+                    "strengths": [],
+                    "weaknesses": [],
+                    "suggestions": []
                 }
-                
-            # Calculate overall score (weighted average)
-            weights = Config.REVIEW_WEIGHTS
-            scores = {
-                "content": results["content_analysis"]["score"],
-                "structure": results["structure_analysis"]["score"],
-                "grammar": results["grammar_analysis"]["score"],
-                "readability": results["readability_metrics"]["overall_score"]
             }
             
-            overall_score = sum(scores[k] * weights[k] for k in weights) / sum(weights.values())
-            results["overall_score"] = round(overall_score, 1)
+            total_score = 0
+            total_possible = 0
+            
+            for i, q in enumerate(questions):
+                question_result = self._review_question(
+                    question=q.get('question', ''),
+                    sample_solution=q.get('model_answer', ''),
+                    user_solution=q.get('student_answer', ''),
+                    max_marks=q.get('marks', 1)  
+                )
+                
+                results["questions"].append(question_result)
+                total_score += question_result["score"]
+                total_possible += q.get('marks', 1)
+                
+                if i < 3:  
+                    results["feedback_summary"]["strengths"].extend(
+                        question_result["strengths"][:1]
+                    )
+                    results["feedback_summary"]["weaknesses"].extend(
+                        question_result["weaknesses"][:1]
+                    )
+                    results["feedback_summary"]["suggestions"].extend(
+                        question_result["suggestions"][:1]
+                    )
+            
+            if total_possible > 0:
+                results["overall_score"] = round((total_score / total_possible) * 100, 1)
             
             self.cache[cache_key] = results
             return results
             
         except Exception as e:
-            self.logger.error(f"Paper review failed: {str(e)}")
+            self.logger.error(f"Exam paper review failed: {str(e)}")
             raise
 
-    def _review_content(self, paper_text: str, paper_type: str) -> Dict:
-        """Evaluate content quality and relevance"""
-        prompt = Config.CONTENT_REVIEW_TEMPLATE.format(
-            paper_type=paper_type,
-            content=paper_text[:Config.MAX_REVIEW_LENGTH]
+    def _review_question(self, question: str, sample_solution: str, user_solution: str, max_marks: int = 1) -> Dict:
+        """Review a single exam question and answer"""
+        prompt = Config.EXAM_QUESTION_REVIEW_TEMPLATE.format(
+            question=question,
+            sample_solution=sample_solution,
+            user_solution=user_solution
         )
         
         response = self._call_llm(prompt)
-        return self._parse_content_response(response)
-
-    def _review_structure(self, paper_text: str) -> Dict:
-        """Evaluate paper structure and organization"""
-        prompt = Config.STRUCTURE_REVIEW_TEMPLATE.format(
-            content=paper_text[:Config.MAX_REVIEW_LENGTH]
-        )
-        
-        response = self._call_llm(prompt)
-        return self._parse_structure_response(response)
-
-    def _review_grammar(self, paper_text: str) -> Dict:
-        """Identify grammatical errors and suggest corrections"""
-        prompt = Config.GRAMMAR_REVIEW_TEMPLATE.format(
-            content=paper_text[:Config.MAX_REVIEW_LENGTH]
-        )
-        
-        response = self._call_llm(prompt)
-        return self._parse_grammar_response(response)
-
-    def _calculate_metrics(self, paper_text: str) -> Dict:
-        """Calculate readability and complexity metrics"""
-        metrics = {
-            "flesch_reading_ease": textstat.flesch_reading_ease(paper_text),
-            "smog_index": textstat.smog_index(paper_text),
-            "coleman_liau_index": textstat.coleman_liau_index(paper_text),
-            "automated_readability_index": textstat.automated_readability_index(paper_text),
-            "dale_chall_readability": textstat.dale_chall_readability_score(paper_text),
-            "difficult_words": textstat.difficult_words(paper_text),
-            "linsear_write": textstat.linsear_write_formula(paper_text),
-            "gunning_fog": textstat.gunning_fog(paper_text),
-            "text_standard": textstat.text_standard(paper_text),
-            "lexicon_count": textstat.lexicon_count(paper_text),
-            "sentence_count": textstat.sentence_count(paper_text)
-        }
-        
-        # Normalize to 0-100 scale where higher is better
-        readability_score = max(0, min(100, metrics["flesch_reading_ease"]))
-        complexity_score = 100 - min(100, metrics["gunning_fog"] * 10)
-        overall_score = (readability_score * 0.6 + complexity_score * 0.4)
-        
-        metrics["overall_score"] = round(overall_score, 1)
-        return metrics
+        return self._parse_question_response(response, max_marks)
 
     def _call_llm(self, prompt: str) -> str:
         """Make API call to LLM"""
@@ -137,7 +100,7 @@ class PaperReviewer:
                 },
                 model=Config.LLM_MODEL,
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,  # Lower temp for more factual responses
+                temperature=0.2, 
                 max_tokens=2000
             )
             return completion.choices[0].message.content
@@ -146,70 +109,62 @@ class PaperReviewer:
             raise
 
     @staticmethod
-    def _parse_content_response(text: str) -> Dict:
-        """Parse content evaluation response"""
-        sections = re.split(r"\n(?=[A-Z][a-z]+:)", text)
-        result = {"score": 70, "strengths": [], "weaknesses": [], "suggestions": []}
-        
-        for section in sections:
-            if "Strengths:" in section:
-                result["strengths"] = [s.strip() for s in section.split(":")[1].split("\n") if s.strip()]
-            elif "Weaknesses:" in section:
-                result["weaknesses"] = [s.strip() for s in section.split(":")[1].split("\n") if s.strip()]
-            elif "Suggestions:" in section:
-                result["suggestions"] = [s.strip() for s in section.split(":")[1].split("\n") if s.strip()]
-            elif "Score:" in section:
-                try:
-                    result["score"] = min(100, max(0, int(re.search(r"\d+", section).group())))
-                except:
-                    pass
-                    
-        return result
-
-    @staticmethod
-    def _parse_structure_response(text: str) -> Dict:
-        """Parse structure evaluation response"""
-        sections = re.split(r"\n(?=[A-Z][a-z]+:)", text)
-        result = {"score": 70, "feedback": [], "organization": [], "flow": []}
-        
-        for section in sections:
-            if "Feedback:" in section:
-                result["feedback"] = [s.strip() for s in section.split(":")[1].split("\n") if s.strip()]
-            elif "Organization:" in section:
-                result["organization"] = [s.strip() for s in section.split(":")[1].split("\n") if s.strip()]
-            elif "Flow:" in section:
-                result["flow"] = [s.strip() for s in section.split(":")[1].split("\n") if s.strip()]
-            elif "Score:" in section:
-                try:
-                    result["score"] = min(100, max(0, int(re.search(r"\d+", section).group())))
-                except:
-                    pass
-                    
-        return result
-
-    @staticmethod
-    def _parse_grammar_response(text: str) -> Dict:
-        """Parse grammar evaluation response"""
-        errors = []
-        corrections = []
-        
-        # Parse error:correction pairs
-        for line in text.split("\n"):
-            if "→" in line:
-                parts = line.split("→")
-                if len(parts) == 2:
-                    errors.append(parts[0].strip())
-                    corrections.append(parts[1].strip())
-        
-        # Estimate score based on error density
-        total_words = len(text.split())
-        error_count = len(errors)
-        error_ratio = min(1, error_count / (total_words / 100))  # errors per 100 words
-        score = max(0, 100 - (error_ratio * 50))  # Deduct up to 50 points for errors
-        
-        return {
-            "score": round(score, 1),
-            "error_count": error_count,
-            "errors": errors,
-            "corrections": corrections
+    def _parse_question_response(text: str, max_marks: int) -> Dict:
+        """Parse the response for a single question review"""
+        result = {
+            "score": 0,
+            "marks_awarded": 0,
+            "strengths": [],
+            "weaknesses": [],
+            "suggestions": [],
+            "detailed_feedback": ""
         }
+        
+        score_match = re.search(r"Final Score:\s*(\d+)", text)
+        if score_match:
+            try:
+                score_pct = min(100, max(0, int(score_match.group(1))))
+                result["score"] = score_pct
+                result["marks_awarded"] = round((score_pct / 100) * max_marks, 1)
+            except:
+                pass
+        
+        strengths_section = re.search(r"Key Strengths:\s*(.*?)(?=\n\s*\n|\Z)", text, re.DOTALL)
+        if strengths_section:
+            result["strengths"] = [
+                s.strip() for s in strengths_section.group(1).split("\n") 
+                if s.strip() and not s.strip().startswith('-')
+            ]
+        
+        weaknesses_section = re.search(r"Areas for Improvement:\s*(.*?)(?=\n\s*\n|\Z)", text, re.DOTALL)
+        if weaknesses_section:
+            result["weaknesses"] = [
+                s.strip() for s in weaknesses_section.group(1).split("\n") 
+                if s.strip() and not s.strip().startswith('-')
+            ]
+        
+        suggestions_section = re.search(r"Suggested Improvements:\s*(.*?)(?=\n\s*\n|\Z)", text, re.DOTALL)
+        if suggestions_section:
+            result["suggestions"] = [
+                s.strip() for s in suggestions_section.group(1).split("\n") 
+                if s.strip() and not s.strip().startswith('-')
+            ]
+        
+        result["detailed_feedback"] = text
+        
+        return result
+
+    def _calculate_readability(self, text: str) -> Dict:
+        """Calculate readability metrics for a question/answer"""
+        if not text.strip():
+            return {}
+            
+        metrics = {
+            "flesch_reading_ease": textstat.flesch_reading_ease(text),
+            "gunning_fog": textstat.gunning_fog(text),
+            "word_count": len(text.split()),
+            "sentence_count": textstat.sentence_count(text),
+            "difficult_words": textstat.difficult_words(text)
+        }
+        
+        return metrics
