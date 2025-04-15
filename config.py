@@ -201,3 +201,33 @@ SUGGESTED IMPROVEMENTS:
 - [Suggestion 3]
 
 FINAL SCORE: [weighted average score 0-100]"""
+
+    MCQ_WEAKNESS_TEMPLATE = """Generate exactly {num_questions} multiple-choice questions targeting these student weaknesses: {weaknesses}.
+Avoid focusing on these strengths: {strengths}.
+Each question must have:
+1. A clear question stem targeting the specified weaknesses
+2. 4 plausible options (A-D)
+3. One correct answer with a 1-2 line explanation
+
+Format each exactly like:
+Q: [question text]
+A) [option A]
+B) [option B]
+C) [option C]
+D) [option D]
+Answer: [letter]
+Explanation: [brief explanation]
+
+Content Excerpt:
+{context}"""
+
+    WRITTEN_WEAKNESS_TEMPLATE = """Generate exactly {num_questions} short-answer questions targeting these student weaknesses: {weaknesses}.
+Avoid focusing on these strengths: {strengths}.
+Each question should require a paragraph-length response and include a sample solution.
+
+Format each exactly like:
+Q: [question text]
+Solution: [sample solution using textbook content and general knowledge]
+
+Content Excerpt:
+{context}"""
