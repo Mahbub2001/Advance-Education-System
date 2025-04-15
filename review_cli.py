@@ -22,39 +22,43 @@ exam_paper = [
 try:
     results = reviewer.review_exam_paper(exam_paper)
     
-    print(f"\nOverall Score: {results['overall_score']}%")
-    print("\nQuestion-by-question feedback:")
+    print("\n=== EXAM PAPER REVIEW RESULTS ===\n")
     
-    for i, q in enumerate(results['questions']):
-        print(f"\nQuestion {i+1}:")
-        print(f"Score: {q['score']}%")
-        print(f"Marks awarded: {q['marks_awarded']}/{exam_paper[i]['marks']}")
+    print(f"OVERALL SCORE: {results['overall_score']}%")
+    print(f"Total Marks: {sum(q['marks_awarded'] for q in results['questions'])}/{sum(q['marks'] for q in exam_paper)}")
+    print("\n")
+    
+    for i, (q_result, q_original) in enumerate(zip(results['questions'], exam_paper)):
+        print(f"QUESTION {i+1}: {q_original['question']}")
+        print(f"Score: {q_result['score']}%")
+        print(f"Marks: {q_result['marks_awarded']}/{q_original['marks']}")
         
         print("\nStrengths:")
-        for strength in (q['strengths'] or ["No specific strengths identified"]):
+        for strength in (q_result['strengths'] or ["No specific strengths identified"]):
             print(f"- {strength}")
             
-        print("\nAreas for improvement:")
-        for weakness in (q['weaknesses'] or ["No specific weaknesses identified"]):
+        print("\nAreas for Improvement:")
+        for weakness in (q_result['weaknesses'] or ["No specific weaknesses identified"]):
             print(f"- {weakness}")
             
         print("\nSuggestions:")
-        for suggestion in (q['suggestions'] or ["No specific suggestions provided"]):
+        for suggestion in (q_result['suggestions'] or ["No specific suggestions provided"]):
             print(f"- {suggestion}")
-            
+        
         print("\nDetailed Feedback:")
-        print(q['detailed_feedback'])
-
-    print("\nSummary Feedback:")
-    print("Strengths:")
+        print(q_result['detailed_feedback'])
+        print("\n" + "="*80 + "\n")
+    
+    print("\nSUMMARY FEEDBACK")
+    print("\nKey Strengths:")
     for strength in (results['feedback_summary']['strengths'] or ["No overall strengths identified"]):
         print(f"- {strength}")
         
-    print("\nWeaknesses:")
+    print("\nMain Weaknesses:")
     for weakness in (results['feedback_summary']['weaknesses'] or ["No overall weaknesses identified"]):
         print(f"- {weakness}")
         
-    print("\nSuggestions:")
+    print("\nTop Suggestions:")
     for suggestion in (results['feedback_summary']['suggestions'] or ["No overall suggestions provided"]):
         print(f"- {suggestion}")
 

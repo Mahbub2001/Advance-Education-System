@@ -119,41 +119,57 @@ class ExamPaperReviewer:
             "suggestions": [],
             "detailed_feedback": text
         }
-        score_match = re.search(r"Final Score:\s*(\d+)", text)
+        
+        score_match = re.search(r"FINAL SCORE:\s*(\d+)", text, re.IGNORECASE)
         if score_match:
             try:
                 score_pct = min(100, max(0, int(score_match.group(1))))
                 result["score"] = score_pct
                 result["marks_awarded"] = round((score_pct / 100) * max_marks, 1)
-            except:
+            except (ValueError, TypeError):
                 pass
         
-        strengths_section = re.search(r"Strengths:\s*(.*?)(?=\n\s*\n|\Z)", text, re.DOTALL | re.IGNORECASE)
+        accuracy_match = re.search(r"ACCURACY:\s*(\d+)", text, re.IGNORECASE)
+        completeness_match = re.search(r"COMPLETENESS:\s*(\d+)", text, re.IGNORECASE)
+        clarity_match = re.search(r"CLARITY:\s*(\d+)", text, re.IGNORECASE)
+        
+        if result["score"] == 0 and all([accuracy_match, completeness_match, clarity_match]):
+            try:
+                accuracy = int(accuracy_match.group(1))
+                completeness = int(completeness_match.group(1))
+                clarity = int(clarity_match.group(1))
+                weighted_score = (accuracy * 0.5) + (completeness * 0.3) + (clarity * 0.2)
+                result["score"] = min(100, max(0, round(weighted_score)))
+                result["marks_awarded"] = round((weighted_score / 100) * max_marks, 1)
+            except (ValueError, TypeError):
+                pass
+        
+        strengths_section = re.search(r"STRENGTHS:\s*(.*?)(?=\n\s*\n|\nWEAKNESSES:|\Z)", 
+                                    text, re.DOTALL | re.IGNORECASE)
         if strengths_section:
             result["strengths"] = [
                 s.strip() for s in strengths_section.group(1).split("\n") 
-                if s.strip() and (s.strip().startswith('-') or s.strip().startswith('*'))
+                if s.strip() and s.strip().startswith('-')
             ]
-            result["strengths"] = [s.lstrip('-* ').strip() for s in result["strengths"]]
+            result["strengths"] = [s.lstrip('-').strip() for s in result["strengths"]]
         
-        weaknesses_section = re.search(r"Weaknesses:\s*(.*?)(?=\n\s*\n|\Z)", text, re.DOTALL | re.IGNORECASE)
+        weaknesses_section = re.search(r"WEAKNESSES:\s*(.*?)(?=\n\s*\n|\nSUGGESTED IMPROVEMENTS:|\Z)", 
+                                    text, re.DOTALL | re.IGNORECASE)
         if weaknesses_section:
             result["weaknesses"] = [
                 s.strip() for s in weaknesses_section.group(1).split("\n") 
-                if s.strip() and (s.strip().startswith('-') or s.strip().startswith('*'))
+                if s.strip() and s.strip().startswith('-')
             ]
-            result["weaknesses"] = [s.lstrip('-* ').strip() for s in result["weaknesses"]]
+            result["weaknesses"] = [s.lstrip('-').strip() for s in result["weaknesses"]]
         
-        suggestions_section = re.search(r"Suggested Improvements:\s*(.*?)(?=\n\s*\n|\Z)", text, re.DOTALL | re.IGNORECASE)
-        if not suggestions_section:
-            suggestions_section = re.search(r"Suggested Improvements:\s*(.*?)(?=Weaknesses:|\Z)", text, re.DOTALL | re.IGNORECASE)
-        
+        suggestions_section = re.search(r"SUGGESTED IMPROVEMENTS:\s*(.*?)(?=\n\s*\n|\nFINAL SCORE:|\Z)", 
+                                    text, re.DOTALL | re.IGNORECASE)
         if suggestions_section:
             result["suggestions"] = [
                 s.strip() for s in suggestions_section.group(1).split("\n") 
-                if s.strip() and (s.strip().startswith('-') or s.strip().startswith('*') or s.strip()[0].isdigit())
+                if s.strip() and s.strip().startswith('-')
             ]
-            result["suggestions"] = [re.sub(r'^[\d\-*\.\s]+', '', s).strip() for s in result["suggestions"]]
+            result["suggestions"] = [s.lstrip('-').strip() for s in result["suggestions"]]
         
         return result
 
