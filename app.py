@@ -69,3 +69,47 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+    
+    
+# def main():
+#     print("=== Optimized Question Generation System ===")
+#     print(f"Max chunk size: {Config.MAX_CHUNK_TOKENS} tokens")
+#     print(f"Max parallel chunks: {Config.MAX_WORKERS}\n")
+    
+#     retriever = ChapterRetriever()
+#     generator = QuestionGenerator()
+    
+#     book_title = input("Enter book title: ").strip()
+#     chapter_num = input("Enter chapter number: ").strip()
+#     question_type = input("Question type (mcq/written): ").lower().strip()
+#     num_questions = int(input(f"Number of questions (default {Config.DEFAULT_NUM_QUESTIONS}): ") or Config.DEFAULT_NUM_QUESTIONS)
+    
+#     weaknesses = input("Enter student weaknesses (comma separated, leave empty if none): ").strip()
+#     strengths = input("Enter student strengths (comma separated, leave empty if none): ").strip()
+    
+#     weaknesses_list = [w.strip() for w in weaknesses.split(",")] if weaknesses else None
+#     strengths_list = [s.strip() for s in strengths.split(",")] if strengths else None
+    
+#     try:
+#         start_time = time()
+        
+#         logger.info(f"Retrieving content for {book_title}, Chapter {chapter_num}...")
+#         chapter_content = retriever.get_full_chapter(book_title, chapter_num)
+        
+#         if not chapter_content:
+#             logger.error("No content found for this chapter")
+#             return
+            
+#         content_size = len(chapter_content.split())
+#         logger.info(f"Processing {content_size} words of chapter content...")
+        
+#         logger.info(f"Generating {num_questions} {question_type} questions...")
+#         questions = generator.generate_questions(
+#             context=chapter_content,
+#             question_type=question_type,
+#             num_questions=num_questions,
+#             weaknesses=weaknesses_list,
+#             strengths=strengths_list
+#         )
+        

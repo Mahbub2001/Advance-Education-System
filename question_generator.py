@@ -16,8 +16,9 @@ class QuestionGenerator:
         self.logger = logging.getLogger(__name__)
         self.cache = Cache(Config.CACHE_DIR)
         
-    def generate_questions(self, context: str, question_type: str, num_questions: int) -> List[Dict]:
-        """Main method to generate questions with large content handling"""
+    def generate_questions(self, context: str, question_type: str, num_questions: int, 
+                         weaknesses: List[str] = None, strengths: List[str] = None) -> List[Dict]:
+        """Main method to generate questions with student weaknesses/strengths in mind"""
         if not context:
             raise ValueError("Empty context provided")
             
@@ -30,10 +31,16 @@ class QuestionGenerator:
         try:
             token_count = len(context.split()) * 1.33
             
-            if token_count <= Config.SINGLE_BATCH_THRESHOLD:
-                return self._generate_single_batch(context, question_type, num_questions)
+            if weaknesses or strengths:
+                if token_count <= Config.SINGLE_BATCH_THRESHOLD:
+                    return self._generate_single_batch_with_focus(context, question_type, num_questions, weaknesses, strengths)
+                else:
+                    return self._generate_multi_batch_with_focus(context, question_type, num_questions, weaknesses, strengths)
             else:
-                return self._generate_multi_batch(context, question_type, num_questions)
+                if token_count <= Config.SINGLE_BATCH_THRESHOLD:
+                    return self._generate_single_batch(context, question_type, num_questions)
+                else:
+                    return self._generate_multi_batch(context, question_type, num_questions)
                 
         except Exception as e:
             self.logger.error(f"Question generation failed: {str(e)}")
@@ -148,6 +155,86 @@ class QuestionGenerator:
         except Exception as e:
             self.logger.error(f"LLM API call failed: {str(e)}")
             raise
+        
+    def _generate_single_batch_with_focus(self, context: str, question_type: str, 
+                                        num_questions: int, weaknesses: List[str], 
+                                        strengths: List[str]) -> List[Dict]:
+        """Handle small content with weakness/strength focus in one batch"""
+        if question_type == 'mcq':
+            return self._generate_mcqs_with_focus(context, num_questions, weaknesses, strengths)
+        return self._generate_written_with_focus(context, num_questions, weaknesses, strengths)
+
+    def _generate_multi_batch_with_focus(self, context: str, question_type: str, 
+                                       num_questions: int, weaknesses: List[str], 
+                                       strengths: List[str]) -> List[Dict]:
+        """Handle large content with chunking and parallel processing with focus"""
+        chunks, questions_per_chunk = self._calculate_optimal_chunking(context, num_questions)
+        
+        with ThreadPoolExecutor(max_workers=Config.MAX_WORKERS) as executor:
+            futures = []
+            for chunk in chunks:
+                futures.append(
+                    executor.submit(
+                        self._generate_questions_from_chunk_with_focus,
+                        chunk,
+                        question_type,
+                        questions_per_chunk,
+                        weaknesses,
+                        strengths
+                    )
+                )
+            
+            questions = []
+            for future in futures:
+                try:
+                    questions.extend(future.result())
+                except Exception as e:
+                    self.logger.warning(f"Chunk processing failed: {str(e)}")
+            
+            return self._deduplicate_questions(questions)[:num_questions]
+
+    def _generate_questions_from_chunk_with_focus(self, chunk: str, question_type: str, 
+                                                num_questions: int, weaknesses: List[str], 
+                                                strengths: List[str]) -> List[Dict]:
+        """Generate questions from a single chunk with focus on weaknesses"""
+        cache_key = f"{hash(chunk)}_{question_type}_{num_questions}_w{hash(str(weaknesses))}_s{hash(str(strengths))}"
+        
+        if cache_key in self.cache:
+            return self.cache[cache_key]
+            
+        try:
+            if question_type == 'mcq':
+                result = self._generate_mcqs_with_focus(chunk, num_questions, weaknesses, strengths)
+            else:
+                result = self._generate_written_with_focus(chunk, num_questions, weaknesses, strengths)
+                
+            self.cache[cache_key] = result
+            return result
+        except Exception as e:
+            self.logger.error(f"Failed to process chunk: {str(e)}")
+            return []
+
+    def _generate_mcqs_with_focus(self, context: str, num_questions: int, 
+                                 weaknesses: List[str], strengths: List[str]) -> List[Dict]:
+        prompt = Config.MCQ_WEAKNESS_TEMPLATE.format(
+            num_questions=num_questions,
+            weaknesses=", ".join(weaknesses) if weaknesses else "none",
+            strengths=", ".join(strengths) if strengths else "none",
+            context=context
+        )
+        response = self._call_llm(prompt)
+        return self._parse_mcq_response(response)
+
+    def _generate_written_with_focus(self, context: str, num_questions: int, 
+                                   weaknesses: List[str], strengths: List[str]) -> List[Dict]:
+        prompt = Config.WRITTEN_WEAKNESS_TEMPLATE.format(
+            num_questions=num_questions,
+            weaknesses=", ".join(weaknesses) if weaknesses else "none",
+            strengths=", ".join(strengths) if strengths else "none",
+            context=context
+        )
+        response = self._call_llm(prompt)
+        return self._parse_written_response(response)
 
     @staticmethod
     def _deduplicate_questions(questions: List[Dict]) -> List[Dict]:
