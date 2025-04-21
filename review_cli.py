@@ -64,3 +64,124 @@ try:
 
 except Exception as e:
     print(f"\nError occurred during paper review: {str(e)}")
+    
+    
+    
+
+""" 
+=== EXAM PAPER REVIEW RESULTS ===
+
+OVERALL SCORE: 1750.0%
+Total Marks: 5.4/8
+
+
+QUESTION 1: Explain the difference between mitosis and meiosis.
+Score: 60%
+Marks: 3.0/5
+
+Strengths:
+- Correctly distinguishes between the purposes of mitosis and meiosis.
+- Recognizes the difference in cell outcomes (identical vs. different).
+- Acknowledges that meiosis involves more steps.
+
+Areas for Improvement:
+- Lacks specific details about the number of divisions and cells produced.
+- Does not mention genetic variation mechanisms like crossing over.
+- The answer is too brief and lacks depth.
+
+Suggestions:
+- Include the number of divisions (1 for mitosis, 2 for meiosis).
+- Mention the number of resulting cells (2 for mitosis, 4 for meiosis).
+- Explain genetic variation mechanisms like crossing over and independent assortment.
+
+Detailed Feedback:
+ACCURACY: 70
+COMPLETENESS: 50
+CLARITY: 60
+
+FEEDBACK:
+- The student correctly identifies that mitosis produces identical cells and meiosis produces diverse cells, and correctly associates mitosis with body cells and meiosis with sex cells.
+- The student mentions that meiosis has more steps, which is correct but lacks specifics like the number of divisions or cells produced.
+- The answer is clear but overly brief and lacks detailed explanations of genetic variation mechanisms.
+
+STRENGTHS:
+- Correctly distinguishes between the purposes of mitosis and meiosis.
+- Recognizes the difference in cell outcomes (identical vs. different).
+- Acknowledges that meiosis involves more steps.
+
+WEAKNESSES:
+- Lacks specific details about the number of divisions and cells produced.
+- Does not mention genetic variation mechanisms like crossing over.
+- The answer is too brief and lacks depth.
+
+SUGGESTED IMPROVEMENTS:
+- Include the number of divisions (1 for mitosis, 2 for meiosis).
+- Mention the number of resulting cells (2 for mitosis, 4 for meiosis).
+- Explain genetic variation mechanisms like crossing over and independent assortment.
+
+FINAL SCORE: 60
+
+================================================================================
+
+QUESTION 2: What is Newton's First Law of Motion?
+Score: 80%
+Marks: 2.4/3
+
+Strengths:
+- Correctly conveys the essence of Newton's First Law.
+- Uses clear and simple language for easy understanding.
+- Addresses both states of motion and rest.
+
+Areas for Improvement:
+- Missing specific terminology which is crucial for a complete understanding.
+- The explanation is overly simplistic, lacking scientific depth.
+
+Suggestions:
+- Include terms like 'constant velocity' and 'external net force.'
+- Elaborate on what constitutes an external force.
+- Provide examples to illustrate the concept better.
+
+Detailed Feedback:
+ACCURACY: 80
+COMPLETENESS: 70
+CLARITY: 90
+
+FEEDBACK:
+- The student correctly identifies the concept of inertia but lacks specific terms like 'constant velocity' and 'external net force.'
+- The answer addresses both motion and rest but omits key details necessary for completeness.
+- The structure is clear and straightforward, though it could benefit from more scientific depth.
+
+STRENGTHS:
+- Correctly conveys the essence of Newton's First Law.
+- Uses clear and simple language for easy understanding.
+- Addresses both states of motion and rest.
+
+WEAKNESSES:
+- Missing specific terminology which is crucial for a complete understanding.
+- The explanation is overly simplistic, lacking scientific depth.
+
+SUGGESTED IMPROVEMENTS:
+- Include terms like 'constant velocity' and 'external net force.'
+- Elaborate on what constitutes an external force.
+- Provide examples to illustrate the concept better.
+
+FINAL SCORE: 80
+
+================================================================================
+
+
+SUMMARY FEEDBACK
+
+Key Strengths:
+- Correctly distinguishes between the purposes of mitosis and meiosis.
+- Correctly conveys the essence of Newton's First Law.
+
+Main Weaknesses:
+- Lacks specific details about the number of divisions and cells produced.
+- Missing specific terminology which is crucial for a complete understanding.
+
+Top Suggestions:
+- Include the number of divisions (1 for mitosis, 2 for meiosis).
+- Include terms like 'constant velocity' and 'external net force.'
+(venv) (base) PS D:\Advance Learning> 
+"""
